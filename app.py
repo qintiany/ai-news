@@ -55,7 +55,10 @@ def index():
         current_category=category, current_source=source,
         per_page=per_page,
         parse_lines=get_parse_lines(), banners=get_banners(),
-        trending=[], shows=[], movies=[]
+        trending=[],
+        tencent_shows=[s for s in get_all_shows() if s.get("platform") == "腾讯视频"],
+        iqiyi_shows=[s for s in get_all_shows() if s.get("platform") == "爱奇艺"],
+        all_movies=get_all_movies()
     )
 
 
@@ -127,6 +130,16 @@ def api_parse_lines():
 
 @app.route("/api/video/detail/<sid>")
 def api_video_detail(sid):
+    show = get_show_by_id(sid)
+    if show:
+        return jsonify(show)
+    return jsonify({"error": "not found"}), 404
+
+
+# ==================== 影视详情 API (给 JS 调用) ====================
+
+@app.route("/api/show/<sid>")
+def api_show_detail(sid):
     show = get_show_by_id(sid)
     if show:
         return jsonify(show)
