@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎀 Kitty News & Video</title>
+<style>
+/* ====== Hello Kitty 配色体系 ====== */
+:root {
+  --pink: #FF69B4; --pink-light: #FFB6C1; --pink-dark: #E91E8C;
+  --hot-pink: #FF1493; --rose: #FF85A2; --blush: #FFD1DC;
+  --cream: #FFF5F7; --white: #FFFFFF; --milk: #FFF0F5;
+  --red: #E53935; --gold: #FFD700; --coral: #FF7F7F;
+  --text: #5D3A3A; --text2: #8B6B6B; --text3: #B8999A;
+  --card: #FFFFFF; --card-hover: #FFF5F7;
+  --shadow: 0 4px 20px rgba(255,105,180,0.15);
+  --shadow-sm: 0 2px 8px rgba(255,105,180,0.1);
+  --radius: 20px; --radius-sm: 14px; --radius-xs: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--cream);
+  color: var(--text); min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(255,182,193,0.3) 0%, transparent 50%),
+    radial-gradient(circle at 90% 80%, rgba(255,133,162,0.2) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(255,209,220,0.15) 0%, transparent 70%);
+}
+
+/* ====== 可爱装饰 ====== */
+.bowknot::before { content: '🎀'; margin-right: 6px; }
+.sparkle::after { content: '✨'; margin-left: 4px; }
+
+/* ====== 导航栏 ====== */
+.navbar {
+  position: sticky; top:0; z-index:1000;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(20px);
+  border-bottom: 3px solid var(--pink-light);
+  padding: 0 24px;
+  box-shadow: 0 2px 15px rgba(255,105,180,0.12);
+}
+.nav-inner { max-width:1400px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:64px; }
+.nav-brand {
+  display:flex; align-items:center; gap:8px; font-size:20px; font-weight:700;
+  color: var(--pink); text-decoration:none;
+}
+.nav-brand .logo { font-size:28px; animation: wiggle 2s infinite; }
+@keyframes wiggle {
+  0%,100%{transform:rotate(0deg)} 25%{transform:rotate(5deg)} 75%{transform:rotate(-5deg)}
+}
+.nav-tabs { display:flex; gap:4px; }
+.nav-tab {
+  padding:10px 24px; border-radius:30px; text-decoration:none; font-size:14px; font-weight:600;
+  color:var(--text2); transition:all 0.3s; position:relative;
+}
+.nav-tab:hover { color:var(--pink); background:var(--milk); }
+.nav-tab.active {
+  color:#fff; background: linear-gradient(135deg, var(--pink), var(--hot-pink));
+  box-shadow: 0 3px 12px rgba(255,105,180,0.35);
+}
+.nav-tab.active::after { content:'🎀'; position:absolute; top:-8px; right:-4px; font-size:12px; }
+
+/* ====== 主体 ====== */
+.main { max-width:1400px; margin:0 auto; padding:28px; }
+
+/* ====== Hello Kitty 装饰条 ====== */
+.deco-bar {
+  text-align:center; padding:12px; margin-bottom:20px;
+  font-size:14px; color:var(--pink); font-weight:600; letter-spacing:2px;
+  background: linear-gradient(90deg, transparent, var(--blush), transparent);
+  border-radius: var(--radius-sm);
+}
+.deco-bar span { font-size:18px; }
+
+/* ====== 新闻样式 ====== */
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-card {
+  background:var(--card); border-radius:var(--radius); padding:20px; text-align:center;
+  border:2px solid var(--blush); transition:all 0.3s; box-shadow:var(--shadow-sm);
+}
+.stat-card:hover { transform:translateY(-3px); border-color:var(--pink); box-shadow:var(--shadow); }
+.stat-num { font-size:28px; font-weight:800; color:var(--pink); }
+.stat-label { font-size:12px; color:var(--text3); margin-top:4px; }
+
+.filter-bar { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; align-items:center; }
+.filter-label { font-size:13px; color:var(--text3); font-weight:600; margin-right:4px; }
+.filter-chip {
+  padding:6px 16px; border-radius:20px; font-size:12px; font-weight:500;
+  border:1.5px solid var(--blush); background:var(--card); color:var(--text2);
+  text-decoration:none; transition:all 0.2s; cursor:pointer;
+}
+.filter-chip:hover { border-color:var(--pink); color:var(--pink); }
+.filter-chip.active {
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff; border-color:transparent;
+}
+
+.news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:18px; margin-bottom:28px; }
+.news-card {
+  background:var(--card); border-radius:var(--radius); padding:22px;
+  border:2px solid var(--blush); transition:all 0.3s; position:relative; overflow:hidden;
+  box-shadow:var(--shadow-sm);
+}
+.news-card:hover { transform:translateY(-3px); border-color:var(--pink-light); box-shadow:var(--shadow); }
+.news-card::before {
+  content:'💝'; position:absolute; top:8px; right:10px; font-size:14px; opacity:0.4;
+}
+.news-source {
+  display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700;
+  padding:4px 12px; border-radius:20px;
+  background:linear-gradient(135deg,var(--blush),var(--pink-light)); color:var(--pink-dark);
+  margin-bottom:10px;
+}
+.news-title { font-size:15px; font-weight:700; line-height:1.5; margin-bottom:8px; }
+.news-title a { text-decoration:none; color:var(--text); transition:color 0.2s; }
+.news-title a:hover { color:var(--pink); }
+.news-summary {
+  font-size:12px; color:var(--text3); line-height:1.7;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+  margin-bottom:10px;
+}
+.news-meta { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text3); }
+.news-cat { padding:3px 10px; border-radius:20px; background:rgba(255,215,0,0.15); color:#D4A017; font-weight:600; }
+
+.pagination { display:flex; justify-content:center; gap:8px; margin-top:32px; flex-wrap:wrap; }
+.page-btn {
+  padding:8px 18px; border-radius:25px; text-decoration:none; font-size:13px; font-weight:600;
+  border:2px solid var(--blush); background:var(--card); color:var(--text2); transition:all 0.2s;
+}
+.page-btn:hover { border-color:var(--pink); color:var(--pink); }
+.page-btn.active { background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff; border-color:transparent; }
+.page-btn.disabled { opacity:0.3; pointer-events:none; }
+
+/* ====== 视频中心 ====== */
+.video-page { }
+
+/* Banner轮播 */
+.banner-section { position:relative; margin-bottom:32px; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); }
+.banner-track { display:flex; transition:transform 0.6s cubic-bezier(0.4,0,0.2,1); }
+.banner-item {
+  min-width:100%; height:360px; position:relative; cursor:pointer;
+  background-size:cover; background-position:center 20%;
+}
+.banner-item::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:65%;
+  background:linear-gradient(transparent,rgba(93,58,58,0.85));
+}
+.banner-info { position:absolute; bottom:40px; left:48px; z-index:2; }
+.banner-info h2 {
+  font-size:30px; font-weight:800; margin-bottom:8px;
+  color:#fff; text-shadow:0 2px 10px rgba(0,0,0,0.3);
+}
+.banner-info p { font-size:14px; color:rgba(255,255,255,0.85); }
+.banner-dots { position:absolute; bottom:16px; right:24px; display:flex; gap:8px; z-index:3; }
+.banner-dot {
+  width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.4);
+  cursor:pointer; transition:all 0.3s; border:2px solid transparent;
+}
+.banner-dot.active { background:var(--pink); border-color:#fff; transform:scale(1.2); }
+
+/* 分类标签 */
+.cat-section { margin-bottom:28px; }
+.cat-tabs { display:flex; gap:8px; flex-wrap:wrap; }
+.cat-tab {
+  padding:10px 22px; border-radius:25px; font-size:13px; font-weight:600;
+  border:2px solid var(--blush); background:var(--card); color:var(--text2);
+  cursor:pointer; transition:all 0.3s;
+}
+.cat-tab:hover { border-color:var(--pink); color:var(--pink); transform:translateY(-1px); }
+.cat-tab.active {
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff;
+  border-color:transparent; box-shadow:0 3px 12px rgba(255,105,180,0.3);
+}
+
+/* 搜索栏 */
+.search-bar {
+  display:flex; gap:8px; margin-bottom:24px; max-width:500px;
+}
+.search-bar input {
+  flex:1; padding:12px 20px; border-radius:25px; border:2px solid var(--blush);
+  font-size:14px; background:var(--card); color:var(--text); outline:none;
+  transition:border-color 0.3s;
+}
+.search-bar input:focus { border-color:var(--pink); }
+.search-bar input::placeholder { color:var(--text3); }
+.search-bar button {
+  padding:12px 24px; border-radius:25px; border:none;
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff;
+  font-size:14px; font-weight:600; cursor:pointer; transition:all 0.3s;
+  box-shadow:0 3px 10px rgba(255,105,180,0.3);
+}
+.search-bar button:hover { transform:translateY(-1px); box-shadow:0 5px 15px rgba(255,105,180,0.4); }
+
+/* 海报网格 */
+.section-title {
+  font-size:20px; font-weight:800; margin-bottom:18px; color:var(--text);
+  display:flex; align-items:center; gap:8px;
+}
+.section-title .icon { font-size:24px; }
+
+.poster-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:18px; margin-bottom:36px; }
+.poster-card {
+  border-radius:var(--radius-sm); overflow:hidden; background:var(--card);
+  border:2px solid var(--blush); cursor:pointer; transition:all 0.3s;
+  box-shadow:var(--shadow-sm); position:relative;
+}
+.poster-card:hover {
+  transform:translateY(-5px); border-color:var(--pink);
+  box-shadow:0 8px 30px rgba(255,105,180,0.25);
+}
+.poster-card img {
+  width:100%; height:250px; object-fit:cover;
+  border-bottom:2px solid var(--blush);
+}
+.poster-body { padding:12px; }
+.poster-title { font-size:14px; font-weight:700; margin-bottom:4px; color:var(--text); }
+.poster-meta { font-size:11px; color:var(--text3); display:flex; align-items:center; gap:6px; }
+.poster-rating { color:var(--gold); font-weight:700; }
+.poster-platform {
+  position:absolute; top:8px; left:8px; padding:3px 10px; border-radius:15px;
+  font-size:10px; font-weight:700;
+  background:rgba(255,255,255,0.92); backdrop-filter:blur(6px); color:var(--pink);
+}
+.poster-tag {
+  position:absolute; top:8px; right:8px; padding:3px 10px; border-radius:15px;
+  font-size:10px; font-weight:700;
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff;
+}
+
+/* ====== 详情弹窗 ====== */
+.detail-overlay {
+  display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(93,58,58,0.6); backdrop-filter:blur(8px);
+  z-index:2000; justify-content:center; align-items:flex-start; padding:30px 20px;
+  overflow-y:auto;
+}
+.detail-overlay.show { display:flex; }
+.detail-modal {
+  background:var(--card); border-radius:var(--radius); max-width:960px; width:100%;
+  position:relative; box-shadow:0 10px 50px rgba(255,105,180,0.25);
+  border:3px solid var(--pink-light); overflow:hidden;
+}
+.detail-close {
+  position:absolute; top:14px; right:14px; z-index:10;
+  width:36px; height:36px; border-radius:50%; border:2px solid var(--blush);
+  background:var(--card); color:var(--text); font-size:16px; cursor:pointer;
+  transition:all 0.2s; display:flex; align-items:center; justify-content:center;
+}
+.detail-close:hover { background:var(--pink); color:#fff; border-color:var(--pink); }
+.detail-hero { display:flex; gap:24px; padding:28px; background:linear-gradient(135deg,var(--milk),var(--blush)); }
+.detail-poster {
+  width:200px; min-width:200px; height:280px; object-fit:cover;
+  border-radius:var(--radius-sm); border:3px solid var(--pink-light);
+  box-shadow:0 4px 15px rgba(255,105,180,0.2);
+}
+.detail-info h2 { font-size:24px; font-weight:800; color:var(--text); margin-bottom:10px; }
+.detail-info .meta { font-size:13px; color:var(--text2); margin-bottom:6px; }
+.detail-info .desc { font-size:13px; color:var(--text3); line-height:1.8; margin:12px 0; }
+.detail-tags { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.detail-tag {
+  padding:5px 14px; border-radius:20px; font-size:11px; font-weight:600;
+  background:linear-gradient(135deg,var(--blush),var(--pink-light)); color:var(--pink-dark);
+}
+
+/* 选集 */
+.episode-section { padding:20px 28px; }
+.episode-section h3 { font-size:16px; font-weight:700; color:var(--text); margin-bottom:14px; }
+.episode-grid { display:flex; gap:8px; flex-wrap:wrap; }
+.episode-btn {
+  width:44px; height:44px; border-radius:12px; border:2px solid var(--blush);
+  background:var(--card); color:var(--text2); font-size:13px; font-weight:600;
+  cursor:pointer; transition:all 0.2s;
+}
+.episode-btn:hover { border-color:var(--pink); color:var(--pink); }
+.episode-btn.active {
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff;
+  border-color:transparent; box-shadow:0 3px 10px rgba(255,105,180,0.3);
+}
+.play-btn {
+  padding:14px 40px; border-radius:25px; border:none; font-size:15px; font-weight:700;
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff;
+  cursor:pointer; transition:all 0.3s;
+  box-shadow:0 4px 15px rgba(255,105,180,0.35);
+}
+.play-btn:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(255,105,180,0.45); }
+
+/* 解析线路 */
+.parse-selector { padding:16px 28px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; border-top:2px dashed var(--blush); }
+.parse-selector > span { font-size:13px; font-weight:700; color:var(--text); white-space:nowrap; }
+.parse-chip {
+  padding:7px 16px; border-radius:20px; font-size:12px; font-weight:600;
+  border:2px solid var(--blush); background:var(--card); color:var(--text2);
+  cursor:pointer; transition:all 0.2s;
+}
+.parse-chip:hover { border-color:var(--pink); color:var(--pink); }
+.parse-chip.active {
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff;
+  border-color:transparent;
+}
+
+/* 播放器 */
+.player-section { padding:0 28px 28px; }
+.player-wrapper {
+  border-radius:var(--radius-sm); overflow:hidden;
+  border:3px solid var(--pink-light); background:#000;
+  box-shadow:0 4px 20px rgba(255,105,180,0.15);
+}
+.player-wrapper iframe {
+  width:100%; height:520px; border:none;
+}
+
+/* ====== 视频解析器 Tab ====== */
+.parser-section { padding:28px; }
+.parser-input-group { display:flex; gap:10px; margin-bottom:16px; }
+.parser-input {
+  flex:1; padding:14px 22px; border-radius:25px; border:2px solid var(--blush);
+  font-size:14px; background:var(--card); color:var(--text); outline:none;
+}
+.parser-input:focus { border-color:var(--pink); }
+.parser-input::placeholder { color:var(--text3); }
+.parser-play-btn {
+  padding:14px 30px; border-radius:25px; border:none;
+  background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff;
+  font-size:15px; font-weight:700; cursor:pointer;
+  box-shadow:0 4px 15px rgba(255,105,180,0.35);
+}
+.parser-lines { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+.parser-line-chip {
+  padding:8px 18px; border-radius:20px; font-size:12px; font-weight:600;
+  border:2px solid var(--blush); background:var(--card); color:var(--text2);
+  cursor:pointer; transition:all 0.2s;
+}
+.parser-line-chip:hover { border-color:var(--pink); color:var(--pink); }
+.parser-line-chip.active { background:linear-gradient(135deg,var(--pink),var(--hot-pink)); color:#fff; border-color:transparent; }
+
+/* ====== 页脚 ====== */
+.footer {
+  text-align:center; padding:28px; margin-top:40px;
+  border-top:3px solid var(--blush);
+  color:var(--text3); font-size:12px;
+}
+.footer span { color:var(--pink); }
+
+/* ====== 响应式 ====== */
+@media(max-width:768px) {
+  .nav-inner { flex-direction:column; height:auto; padding:12px; gap:10px; }
+  .detail-hero { flex-direction:column; align-items:center; text-align:center; }
+  .detail-poster { width:160px; min-width:160px; height:220px; }
+  .poster-grid { grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+  .poster-card img { height:200px; }
+  .banner-item { height:240px; }
+  .banner-info h2 { font-size:22px; }
+  .player-wrapper iframe { height:280px; }
+  .detail-modal { margin:10px; border-radius:16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ====== 导航栏 ====== -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a class="nav-brand" href="/">
+      <span class="logo">🎀</span> Kitty Hub
+    </a>
+    <div class="nav-tabs">
+      <a class="nav-tab {% if active_tab=='news' %}active{% endif %}" href="/">📰 新闻</a>
+      <a class="nav-tab {% if active_tab=='video' %}active{% endif %}" href="/video">🎬 影视</a>
+    </div>
+  </div>
+</nav>
+
+<div class="main">
+
+{% if active_tab == 'news' %}
+<!-- ====== 新闻页面 ====== -->
+<div class="deco-bar"><span>🌸</span> 今日新鲜事 · AI资讯速递 <span>🌸</span></div>
+
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-num">{{ stats.total }}</div><div class="stat-label">📰 总文章</div></div>
+  <div class="stat-card"><div class="stat-num">{{ stats.sources }}</div><div class="stat-label">📡 数据源</div></div>
+  <div class="stat-card"><div class="stat-num">{{ stats.categories }}</div><div class="stat-label">📂 分类</div></div>
+  <div class="stat-card"><div class="stat-num">{{ stats.today }}</div><div class="stat-label">🆕 今日</div></div>
+</div>
+
+<div class="filter-bar">
+  <span class="filter-label">📂 分类</span>
+  <a class="filter-chip {% if current_category=='全部' %}active{% endif %}" href="/?page=1&category=全部&source={{current_source}}">全部</a>
+  {% for cat in categories %}
+  <a class="filter-chip {% if current_category==cat %}active{% endif %}" href="/?page=1&category={{cat}}&source={{current_source}}">{{cat}}</a>
+  {% endfor %}
+</div>
+<div class="filter-bar">
+  <span class="filter-label">📡 来源</span>
+  <a class="filter-chip {% if current_source=='全部' %}active{% endif %}" href="/?page=1&category={{current_category}}&source=全部">全部</a>
+  {% for src in sources %}
+  <a class="filter-chip {% if current_source==src %}active{% endif %}" href="/?page=1&category={{current_category}}&source={{src}}">{{src}}</a>
+  {% endfor %}
+</div>
+
+<div class="news-grid">
+  {% for n in news %}
+  <div class="news-card">
+    <div class="news-source">📡 {{n.source}}</div>
+    <div class="news-title"><a href="{{n.link}}" target="_blank" rel="noopener">{{n.title}}</a></div>
+    <div class="news-summary">{{n.summary}}</div>
+    <div class="news-meta">
+      <span>{{n.published}}</span>
+      <span class="news-cat">{{n.category}}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="pagination">
+  {% if page > 1 %}
+  <a class="page-btn" href="/?page={{page-1}}&category={{current_category}}&source={{current_source}}">← 上一页</a>
+  {% endif %}
+  {% for p in range(1, total_pages+1) %}
+    {% if p == page %}
+    <span class="page-btn active">{{p}}</span>
+    {% elif p <= 3 or p > total_pages-3 or (p >= page-2 and p <= page+2) %}
+    <a class="page-btn" href="/?page={{p}}&category={{current_category}}&source={{current_source}}">{{p}}</a>
+    {% endif %}
+  {% endfor %}
+  {% if page < total_pages %}
+  <a class="page-btn" href="/?page={{page+1}}&category={{current_category}}&source={{current_source}}">下一页 →</a>
+  {% endif %}
+</div>
+
+{% elif active_tab == 'video' %}
+<!-- ====== 视频中心 ====== -->
+
+<div class="deco-bar"><span>🎀</span> Hello Kitty 影视中心 · 精选好剧天天看 <span>🎀</span></div>
+
+<!-- 搜索 -->
+<div class="search-bar">
+  <input type="text" id="lib-search" placeholder="🔍 搜索影片名称、类型..." onkeydown="if(event.key==='Enter')searchMedia()">
+  <button onclick="searchMedia()">搜索 🎀</button>
+</div>
+
+<!-- Banner -->
+<div class="banner-section" id="bannerSection">
+  <div class="banner-track" id="bannerTrack">
+    {% for b in banners %}
+    <div class="banner-item" style="background-image:url('{{b.img}}')" onclick="openDetail('{{b.id}}')">
+      <div class="banner-info">
+        <h2>{{b.title}}</h2>
+        <p>{{b.desc}}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="banner-dots">
+    {% for b in banners %}
+    <div class="banner-dot {% if loop.index0==0 %}active{% endif %}" onclick="goBanner({{loop.index0}})"></div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- 分类 -->
+<div class="cat-section">
+  <div class="cat-tabs">
+    <div class="cat-tab active" onclick="switchCat(this,'all')">🌸 全部</div>
+    <div class="cat-tab" onclick="switchCat(this,'show')">📺 剧集</div>
+    <div class="cat-tab" onclick="switchCat(this,'movie')">🎬 电影</div>
+    <div class="cat-tab" onclick="switchCat(this,'tencent')">🐧 腾讯</div>
+    <div class="cat-tab" onclick="switchCat(this,'iqiyi')">🥝 爱奇艺</div>
+  </div>
+</div>
+
+<!-- 热门推荐 -->
+<div class="section-title"><span class="icon">🔥</span> 热门推荐</div>
+<div class="poster-grid" id="trendingGrid">
+  {% for item in trending %}
+  <div class="poster-card" onclick="openDetail('{{item.id}}')" data-type="{{item.type}}" data-platform="{{item.platform}}">
+    <div class="poster-platform">{{item.platform_icon}} {{item.platform}}</div>
+    {% if item.status == '热播中' %}<div class="poster-tag">🔥热播</div>{% endif %}
+    <img src="{{item.poster}}" alt="{{item.title}}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 250%22><rect fill=%22%23FFD1DC%22 width=%22180%22 height=%22250%22/><text x=%2290%22 y=%22125%22 text-anchor=%22middle%22 font-size=%2240%22>🎀</text></svg>'">
+    <div class="poster-body">
+      <div class="poster-title">{{item.title}}</div>
+      <div class="poster-meta">
+        <span class="poster-rating">⭐{{item.rating}}</span>
+        <span>{{item.genre}}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- 剧集 -->
+<div class="section-title"><span class="icon">📺</span> 热播剧集</div>
+<div class="poster-grid" id="showsGrid">
+  {% for item in shows %}
+  <div class="poster-card" onclick="openDetail('{{item.id}}')" data-platform="{{item.platform}}">
+    <div class="poster-platform">{{item.platform_icon}} {{item.platform}}</div>
+    {% if item.status == '热播中' %}<div class="poster-tag">🔥热播</div>{% endif %}
+    <img src="{{item.poster}}" alt="{{item.title}}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 250%22><rect fill=%22%23FFD1DC%22 width=%22180%22 height=%22250%22/><text x=%2290%22 y=%22125%22 text-anchor=%22middle%22 font-size=%2240%22>🎀</text></svg>'">
+    <div class="poster-body">
+      <div class="poster-title">{{item.title}}</div>
+      <div class="poster-meta">
+        <span class="poster-rating">⭐{{item.rating}}</span>
+        <span>{{item.episodes}}集</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- 电影 -->
+<div class="section-title"><span class="icon">🎬</span> 精选电影</div>
+<div class="poster-grid" id="moviesGrid">
+  {% for item in movies %}
+  <div class="poster-card" onclick="openDetail('{{item.id}}')" data-platform="{{item.platform}}">
+    <div class="poster-platform">{{item.platform_icon}} {{item.platform}}</div>
+    <img src="{{item.poster}}" alt="{{item.title}}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 180 250%22><rect fill=%22%23FFD1DC%22 width=%22180%22 height=%22250%22/><text x=%2290%22 y=%22125%22 text-anchor=%22middle%22 font-size=%2240%22>🎀</text></svg>'">
+    <div class="poster-body">
+      <div class="poster-title">{{item.title}}</div>
+      <div class="poster-meta">
+        <span class="poster-rating">⭐{{item.rating}}</span>
+        <span>{{item.duration}}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endif %}
+
+</div><!-- /main -->
+
+<!-- ====== 详情弹窗 ====== -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-modal" id="detailModal"></div>
+</div>
+
+<div class="footer">
+  <span>🎀</span> Hello Kitty Hub · Made with 💝 <span>🎀</span>
+</div>
+
+<script>
+// ========== 解析线路（努力鸭） ==========
+const PARSE_LINES = {{ parse_lines | tojson }};
+let currentParseIdx = 0;
+let currentDetail = null;
+let currentEpisode = 1;
+
+// ========== Banner 轮播 ==========
+let bannerIdx = 0;
+const bannerCount = {{ banners | length }};
+function goBanner(idx) {
+  bannerIdx = idx;
+  document.getElementById('bannerTrack').style.transform = `translateX(-${idx*100}%)`;
+  document.querySelectorAll('.banner-dot').forEach((d,i) => d.classList.toggle('active', i===idx));
+}
+setInterval(() => { goBanner((bannerIdx+1) % bannerCount); }, 5000);
+
+// ========== 分类筛选 ==========
+function switchCat(el, cat) {
+  document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  
+  const cards = document.querySelectorAll('.poster-card');
+  cards.forEach(card => {
+    const type = card.dataset.type;
+    const platform = card.dataset.platform || '';
+    let show = true;
+    if (cat === 'show') show = (type === 'show');
+    else if (cat === 'movie') show = (type === 'movie');
+    else if (cat === 'tencent') show = platform.includes('腾讯');
+    else if (cat === 'iqiyi') show = platform.includes('爱奇艺');
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+// ========== 获取某集的播放URL ==========
+function getEpisodeUrl(item, ep) {
+  if (item.episode_urls && item.episode_urls[ep]) {
+    return item.episode_urls[ep];
+  }
+  return item.url;
+}
+
+// ========== 构建解析URL ==========
+function buildParseUrl(platformUrl) {
+  const line = PARSE_LINES[currentParseIdx];
+  return line.url + encodeURIComponent(platformUrl);
+}
+
+// ========== 打开详情 ==========
+function openDetail(sid) {
+  fetch(`/api/video/detail/${sid}`)
+    .then(r => r.json())
+    .then(item => {
+      currentDetail = item;
+      const isShow = item.episodes !== undefined;
+      currentEpisode = 1;
+      const modal = document.getElementById('detailModal');
+      modal.innerHTML = `
+        <button class="detail-close" onclick="closeDetail()">✕</button>
+        <div class="detail-hero">
+          <img class="detail-poster" src="${item.poster}" alt="${item.title}" onerror="this.style.display='none'">
+          <div class="detail-info">
+            <h2>🎀 ${item.title}</h2>
+            <div class="meta">${item.platform_icon} ${item.platform} · ${item.year} · ${item.genre} · ⭐${item.rating}</div>
+            <div class="meta">${isShow ? '📺 '+item.episodes+'集 · '+item.status : '🎬 '+item.duration+' · '+item.status}</div>
+            <div class="meta">主演：${item.subtitle}</div>
+            <div class="desc">${item.desc}</div>
+            <div class="detail-tags">${(item.tags||[]).map(t=>`<span class="detail-tag">${t}</span>`).join('')}</div>
+          </div>
+        </div>
+        ${isShow ? `
+        <div class="episode-section">
+          <h3>📺 选集 (共${item.episodes}集)</h3>
+          <div class="episode-grid">${Array.from({length:item.episodes},(_,i)=>`
+            <button class="episode-btn ${i===0?'active':''}" onclick="playEpisode(${i+1},this)">${i+1}</button>
+          `).join('')}</div>
+        </div>` : `
+        <div class="episode-section" style="text-align:center;">
+          <button class="play-btn" onclick="playMovie()">🎀 立即播放</button>
+        </div>`}
+        <div class="parse-selector">
+          <span>🔗 解析线路：</span>
+          ${PARSE_LINES.map((l,i)=>`<button class="parse-chip ${i===currentParseIdx?'active':''}" onclick="selectParse(${i})">${l.name}</button>`).join('')}
+          <span style="font-size:11px;color:var(--text3);margin-left:8px;">💡 播不了？换个线路试试</span>
+        </div>
+        <div class="player-section">
+          <div class="player-wrapper" id="playerWrapper">
+            <div id="playerLoading" style="display:flex;align-items:center;justify-content:center;height:520px;color:var(--pink);font-size:18px;background:#1a1a1a;">
+              <div style="text-align:center;">
+                <div style="font-size:40px;margin-bottom:12px;">🎀</div>
+                <div>加载中，请稍候...</div>
+              </div>
+            </div>
+            <iframe id="detailPlayer" 
+              allowfullscreen 
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+              referrerpolicy="no-referrer"
+              style="width:100%;height:520px;border:none;display:none;"
+            ></iframe>
+          </div>
+        </div>
+      `;
+      document.getElementById('detailOverlay').classList.add('show');
+      document.body.style.overflow = 'hidden';
+      
+      // 自动播放：剧集播第1集，电影直接播
+      if (isShow) {
+        doPlay(getEpisodeUrl(item, 1));
+      } else {
+        doPlay(item.url);
+      }
+    })
+    .catch(err => {
+      alert('加载失败，请重试 💔');
+      console.error(err);
+    });
+}
+
+// ========== 核心播放函数 ==========
+function doPlay(platformUrl) {
+  const player = document.getElementById('detailPlayer');
+  const loading = document.getElementById('playerLoading');
+  if (!player) return;
+  
+  if (loading) loading.style.display = 'flex';
+  player.style.display = 'none';
+  
+  const parseUrl = buildParseUrl(platformUrl);
+  console.log('🎬 播放URL:', parseUrl);
+  
+  player.onload = function() {
+    if (loading) loading.style.display = 'none';
+    player.style.display = 'block';
+    console.log('✅ 播放器加载完成');
+  };
+  
+  // 超时保底：5秒后强制显示
+  setTimeout(() => {
+    if (loading && loading.style.display !== 'none') {
+      loading.style.display = 'none';
+      player.style.display = 'block';
+    }
+  }, 5000);
+  
+  player.src = parseUrl;
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+  const p = document.getElementById('detailPlayer');
+  if (p) p.src = '';
+  currentDetail = null;
+  currentEpisode = 1;
+}
+
+function selectParse(idx) {
+  currentParseIdx = idx;
+  document.querySelectorAll('.parse-chip').forEach((c,i) => c.classList.toggle('active', i===idx));
+  const p = document.getElementById('detailPlayer');
+  if (p && p.src && currentDetail) {
+    const isShow = currentDetail.episodes !== undefined;
+    const playUrl = isShow ? getEpisodeUrl(currentDetail, currentEpisode) : currentDetail.url;
+    doPlay(playUrl);
+  }
+}
+
+function playEpisode(ep, btn) {
+  if (!currentDetail) return;
+  currentEpisode = ep;
+  
+  document.querySelectorAll('.episode-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  
+  const episodeUrl = getEpisodeUrl(currentDetail, ep);
+  doPlay(episodeUrl);
+}
+
+function playMovie() {
+  if (!currentDetail) return;
+  doPlay(currentDetail.url);
+}
+
+// ========== 搜索 ==========
+function searchMedia() {
+  const q = document.getElementById('lib-search')?.value?.trim();
+  if (!q) return;
+  fetch(`/api/video/search?q=${encodeURIComponent(q)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.results.length > 0) {
+        openDetail(data.results[0].id);
+      } else {
+        alert('没找到相关内容 💔');
+      }
+    });
+}
+
+// 点击遮罩关闭
+document.getElementById('detailOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeDetail();
+});
+</script>
+</body>
+</html>
