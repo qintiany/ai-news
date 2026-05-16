@@ -27,25 +27,27 @@ def generate_episode_urls(url, episodes, platform):
 
 
 # ========== 解析线路 ==========
+# 全部来自努力鸭 https://www.nuliya.top/vip/ 的真实解析线路
+# 实测：xmflv.com/hls.one/xmflv.cc 返回JS动态渲染播放器(8256B) ✅
+# 实测：yemu.xyz 是博客网站不是解析器 ❌ 已移除
+# 实测：nnxv.cn 返回HTTP 403 ❌
 PARSE_LINES = [
-    # 线路六 yemu.xyz: 测试最靠谱 ✅ DPlayer+hls.js+m3u8，无X-Frame限制
-    {"name": "🌸 首选线路", "url": "https://www.yemu.xyz/?url="},
-    # 默认一 xmflv.com: HTTP 200, 有Player, JS动态渲染
-    {"name": "🎀 备选一", "url": "https://jx.xmflv.com/?url="},
-    # 线路八 hls.one: HTTP 200, 加密解析
-    {"name": "🎀 备选二", "url": "https://jx.hls.one/?url="},
-    # 线路七 xmflv.cc: HTTP 200, 加密解析
-    {"name": "🎀 备选三", "url": "https://jx.xmflv.cc/?url="},
-    # 线路五 playerjy: HTTP 200, iframe/document.write方式
-    {"name": "🎀 备选四", "url": "https://jx.playerjy.com/?url="},
-    # 线路四 789jiexi: HTTP 200, iframe/document.write方式
-    {"name": "🎀 备选五", "url": "https://jx.789jiexi.com/?url="},
-    # 无法播放时 2s0: HTTP 200, iframe方式
-    {"name": "🎀 备选六", "url": "https://jx.2s0.cn/player/?url="},
-    # 推荐二 nnxv: ❌ HTTP 403 BLOCKED (保留但放最后)
-    {"name": "⚠️ 备选七(可能受限)", "url": "https://jx.nnxv.cn/tv.php?url="},
-    # 剧名/链接 m1907: 仅502B，基本无内容
-    {"name": "⚠️ 备选八(可能受限)", "url": "https://z1.m1907.top/?jx="},
+    # 默认一 xmflv.com: 努力鸭默认线路，JS动态渲染播放器 ✅
+    {"name": "🌸 默认线路", "url": "https://jx.xmflv.com/?url="},
+    # 线路八 hls.one: JS动态渲染播放器 ✅
+    {"name": "🎀 线路二", "url": "https://jx.hls.one/?url="},
+    # 线路七 xmflv.cc: JS动态渲染播放器 ✅
+    {"name": "🎀 线路三", "url": "https://jx.xmflv.cc/?url="},
+    # 线路五 playerjy: iframe/document.write方式 ✅
+    {"name": "🎀 线路四", "url": "https://jx.playerjy.com/?url="},
+    # 线路四 789jiexi: iframe/document.write方式 ✅
+    {"name": "🎀 线路五", "url": "https://jx.789jiexi.com/?url="},
+    # 无法播放时 2s0: iframe方式 ✅
+    {"name": "🎀 线路六", "url": "https://jx.2s0.cn/player/?url="},
+    # 剧名/链接 m1907: 轻量但可能不稳定
+    {"name": "🎀 线路七", "url": "https://z1.m1907.top/?jx="},
+    # 推荐二 nnxv: ⚠️ HTTP 403 可能被限制
+    {"name": "⚠️ 线路八", "url": "https://jx.nnxv.cn/tv.php?url="},
 ]
 
 # ========== 腾讯视频热门剧集 ==========

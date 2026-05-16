@@ -71,10 +71,18 @@ def video_page():
     movies = get_all_movies()
     banners = get_banners()
     parse_lines = get_parse_lines()
+    from database import get_categories, get_sources
     return render_template("index.html",
         active_tab="video",
-        trending=trending, shows=shows, movies=movies,
-        banners=banners, parse_lines=parse_lines
+        news=[], stats={"total": 0, "today": 0, "sources": []}, now="",
+        categories=get_categories(), sources=get_sources(),
+        page=1, total_pages=1, total=0, per_page=12,
+        current_category="全部", current_source="全部",
+        parse_lines=parse_lines, banners=banners,
+        trending=trending,
+        tencent_shows=[s for s in shows if s.get("platform") == "腾讯视频"],
+        iqiyi_shows=[s for s in shows if s.get("platform") == "爱奇艺"],
+        all_movies=movies
     )
 
 

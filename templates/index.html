@@ -326,7 +326,7 @@ body::before {
   transition: transform 0.4s;
 }
 .news-card:hover .news-card-img { transform: scale(1.05); }
-.news-card-img-wrap { overflow: hidden; position: relative; }
+.news-card-img-wrap { overflow: hidden; position: relative; min-height: 100px; background: linear-gradient(135deg, var(--pink-light), var(--blue-light)); }
 
 .news-card-source {
   position: absolute;
@@ -997,7 +997,7 @@ body::before {
 
     <div class="news-grid" id="newsGrid">
       {% for item in news %}
-      <div class="news-card" onclick="window.open('{{ item.link }}', '_blank')">
+      <div class="news-card" onclick="{% if item.url %}window.open('{{ item.url }}', '_blank'){% endif %}">
         <div class="news-card-img-wrap">
           {% if item.image %}
           <img class="news-card-img" src="{{ item.image }}" alt="" loading="lazy"
@@ -1009,7 +1009,7 @@ body::before {
           <div class="news-card-title">{{ item.title }}</div>
           <div class="news-card-summary">{{ item.summary or '' }}</div>
           <div class="news-card-meta">
-            <span class="news-card-date">{{ item.published or '' }}</span>
+            <span class="news-card-date">{{ item.published_at[:10] if item.published_at else '' }}</span>
           </div>
         </div>
       </div>
@@ -1197,7 +1197,7 @@ body::before {
               allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
               allowfullscreen
               referrerpolicy="no-referrer"
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-modals"
               src="about:blank"></iframe>
     </div>
     <div class="player-controls">
