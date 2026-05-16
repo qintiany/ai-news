@@ -46,6 +46,36 @@ def parse_date(entry):
     return datetime.now(timezone.utc).isoformat()
 
 
+def extract_image(entry):
+    """从RSS条目中提取封面图"""
+    # 尝试 media:content / media:thumbnail
+    if "media_content" in entry and entry.media_content:
+        for mc in entry.media_content:
+            if "url" in mc:
+                return mc["url"]
+    if "media_thumbnail" in entry and entry.media_thumbnail:
+        for mt in entry.media_thumbnail:
+            if "url" in mt:
+                return mt["url"]
+    # 尝试 enclosures
+    if "enclosures" in entry and entry.enclosures:
+        for enc in entry.enclosures:
+            if enc.get("type", "").startswith("image/"):
+                return enc.get("href", "")
+    # 尝试 links 中的 image
+    if "links" in entry:
+        for link in entry.links:
+            if link.get("type", "").startswith("image/"):
+                return link.get("href", "")
+    # 尝试从 summary 中提取 img 标签
+    summary = entry.get("summary", entry.get("description", ""))
+    if summary:
+        img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', summary, re.I)
+        if img_match:
+            return img_match[1]
+    return ""
+
+
 def fetch_rss_feed(feed_info):
     """抓取单个RSS源"""
     results = []
@@ -58,11 +88,12 @@ def fetch_rss_feed(feed_info):
             print(f"  ⚠️ {feed_info['name']}: 解析失败 - {feed.bozo_exception}")
             return results
         
-        for entry in feed.entries[:5]:  # 每个源取最新5条
+        for entry in feed.entries[:8]:  # 每个源取最新8条(增加数量)
             title = entry.get("title", "").strip()
             link = entry.get("link", "")
             summary = entry.get("summary", entry.get("description", ""))
             published = parse_date(entry)
+            image = extract_image(entry)
             
             if title and link:
                 results.append({
@@ -72,6 +103,7 @@ def fetch_rss_feed(feed_info):
                     "source": feed_info["name"],
                     "category": feed_info["category"],
                     "published_at": published,
+                    "image": image,
                 })
         
         print(f"  ✅ {feed_info['name']}: {len(results)}条")
@@ -92,11 +124,12 @@ def fetch_youtube(channel_info):
         resp.raise_for_status()
         feed = feedparser.parse(resp.content)
         
-        for entry in feed.entries[:3]:  # 每个频道取最新3条
+        for entry in feed.entries[:5]:  # 每个频道取最新5条(增加数量)
             title = entry.get("title", "").strip()
             link = entry.get("link", "")
             summary = entry.get("summary", entry.get("description", ""))
             published = parse_date(entry)
+            image = extract_image(entry)
             
             if title and link:
                 results.append({
@@ -106,6 +139,7 @@ def fetch_youtube(channel_info):
                     "source": channel_info["name"],
                     "category": "YouTube",
                     "published_at": published,
+                    "image": image,
                 })
         
         print(f"  ✅ {channel_info['name']}: {len(results)}条")
@@ -142,6 +176,7 @@ def fetch_all():
             source=item["source"],
             category=item["category"],
             published_at=item["published_at"],
+            image=item.get("image", ""),
         ):
             saved += 1
     

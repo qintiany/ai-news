@@ -1,93 +1,98 @@
 """
-AI News Hub + 视频中心 - 主应用
-新闻聚合 + 视频解析 + 影视点播
+AI News Hub + 实时影视中心
+新闻聚合 + 猫眼资源实时API + 快速解析播放
 """
 from flask import Flask, render_template, jsonify, request
 from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime
-import os
 import threading
 
 from database import init_db, get_latest_news, get_stats, get_categories, get_sources
 from fetcher import fetch_all
 from config import FETCH_INTERVAL_MINUTES
-from video_data import search_library, get_trending, get_all_shows, get_all_movies, get_banners, get_parse_lines, get_show_by_id
+from api_client import (
+    search_videos, get_category_list, get_home_data, get_trending,
+    get_parse_lines, get_all_categories, test_parse_speed, build_play_urls
+)
 
 app = Flask(__name__)
-
 init_db()
+
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(
-        fetch_all, 'interval', minutes=FETCH_INTERVAL_MINUTES,
-        id='fetch_news', next_run_time=None
-    )
+    scheduler.add_job(fetch_all, 'interval', minutes=FETCH_INTERVAL_MINUTES, id='fetch_news', next_run_time=None)
     scheduler.start()
     print("⏰ 定时抓取已启动")
 
 threading.Timer(10, start_scheduler).start()
 
 
-# ==================== 新闻页面 ====================
-
+# ==================== 首页 ====================
 @app.route("/")
 def index():
-    """首页 - AI 新闻"""
     page = int(request.args.get('page', 1))
-    per_page = 12
+    per_page = 20
     category = request.args.get('category', '全部')
     source = request.args.get('source', '全部')
-
     offset = (page - 1) * per_page
     news_list, total = get_latest_news(limit=per_page, offset=offset, category=category, source=source)
     stats = get_stats()
-    categories = get_categories()
-    sources = get_sources()
+    cats = get_categories()
+    srcs = get_sources()
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     total_pages = (total + per_page - 1) // per_page
+
+    # 首页数据（带容错）
+    try:
+        home_data = get_home_data()
+    except:
+        home_data = {}
+    try:
+        trending = get_trending()
+    except:
+        trending = []
+    cats_video = get_all_categories()
 
     return render_template("index.html",
         active_tab="news",
         news=news_list, stats=stats, now=now,
-        categories=categories, sources=sources,
+        categories=cats, sources=srcs,
         page=page, total_pages=total_pages, total=total,
         current_category=category, current_source=source,
         per_page=per_page,
-        parse_lines=get_parse_lines(), banners=get_banners(),
-        trending=[],
-        tencent_shows=[s for s in get_all_shows() if s.get("platform") == "腾讯视频"],
-        iqiyi_shows=[s for s in get_all_shows() if s.get("platform") == "爱奇艺"],
-        all_movies=get_all_movies()
+        parse_lines=get_parse_lines(),
+        video_categories=cats_video,
+        home_data=home_data,
+        trending=trending,
     )
 
 
-# ==================== 视频页面 ====================
-
+# ==================== 影视页 ====================
 @app.route("/video")
 def video_page():
-    trending = get_trending()
-    shows = get_all_shows()
-    movies = get_all_movies()
-    banners = get_banners()
-    parse_lines = get_parse_lines()
     from database import get_categories, get_sources
+    try:
+        home_data = get_home_data()
+    except:
+        home_data = {}
+    try:
+        trending = get_trending()
+    except:
+        trending = []
     return render_template("index.html",
         active_tab="video",
-        news=[], stats={"total": 0, "today": 0, "sources": []}, now="",
-        categories=get_categories(), sources=get_sources(),
-        page=1, total_pages=1, total=0, per_page=12,
+        news=[], stats={}, now="", categories=get_categories(), sources=get_sources(),
+        page=1, total_pages=1, total=0, per_page=20,
         current_category="全部", current_source="全部",
-        parse_lines=parse_lines, banners=banners,
+        parse_lines=get_parse_lines(),
+        video_categories=get_all_categories(),
+        home_data=home_data,
         trending=trending,
-        tencent_shows=[s for s in shows if s.get("platform") == "腾讯视频"],
-        iqiyi_shows=[s for s in shows if s.get("platform") == "爱奇艺"],
-        all_movies=movies
     )
 
 
 # ==================== 新闻 API ====================
-
 @app.route("/api/news")
 def api_news():
     page = int(request.args.get('page', 1))
@@ -96,62 +101,75 @@ def api_news():
     source = request.args.get('source', None)
     offset = (page - 1) * per_page
     news_list, total = get_latest_news(limit=per_page, offset=offset, category=category, source=source)
-    return jsonify({"count": len(news_list), "total": total, "page": page, "per_page": per_page, "news": news_list})
+    return jsonify({"count": len(news_list), "total": total, "page": page, "news": news_list})
 
 @app.route("/api/stats")
 def api_stats():
     return jsonify(get_stats())
 
-@app.route("/api/categories")
-def api_categories():
-    return jsonify(get_categories())
 
-@app.route("/api/sources")
-def api_sources():
-    return jsonify(get_sources())
-
-
-# ==================== 视频 API ====================
-
+# ==================== 实时影视 API ====================
 @app.route("/api/video/search")
 def api_video_search():
     q = request.args.get('q', '')
-    cat = request.args.get('type', 'all')
-    results = search_library(q, cat)
-    return jsonify({"count": len(results), "results": results})
+    page = int(request.args.get('page', 1))
+    if not q or len(q) < 1:
+        return jsonify({"count": 0, "videos": [], "total": 0})
+    videos, total = search_videos(q, page=page)
+    return jsonify({"count": len(videos), "videos": videos, "total": total, "page": page})
+
+@app.route("/api/video/category")
+def api_video_category():
+    cat = request.args.get('cat', '国产剧')
+    page = int(request.args.get('page', 1))
+    videos, total = get_category_list(cat, page=page)
+    return jsonify({"count": len(videos), "videos": videos, "total": total, "cat": cat, "page": page})
 
 @app.route("/api/video/trending")
 def api_video_trending():
-    return jsonify(get_trending())
+    videos = get_trending()
+    return jsonify({"count": len(videos), "videos": videos})
 
-@app.route("/api/video/movies")
-def api_video_movies():
-    return jsonify(get_all_movies())
+@app.route("/api/video/categories")
+def api_video_categories():
+    return jsonify(get_all_categories())
 
-@app.route("/api/video/shows")
-def api_video_shows():
-    return jsonify(get_all_shows())
+@app.route("/api/video/home")
+def api_video_home():
+    return jsonify(get_home_data())
 
 @app.route("/api/video/parse_lines")
 def api_parse_lines():
     return jsonify(get_parse_lines())
 
-@app.route("/api/video/detail/<sid>")
-def api_video_detail(sid):
-    show = get_show_by_id(sid)
-    if show:
-        return jsonify(show)
-    return jsonify({"error": "not found"}), 404
+@app.route("/api/video/parse_test")
+def api_parse_test():
+    """测试解析线路速度"""
+    return jsonify(test_parse_speed())
 
 
-# ==================== 影视详情 API (给 JS 调用) ====================
+@app.route("/api/video/play_urls")
+def api_video_play_urls():
+    """根据视频名获取各平台播放URL"""
+    name = request.args.get('name', '')
+    if not name:
+        return jsonify({"error": "need name"}), 400
+    urls = build_play_urls(name)
+    return jsonify({"name": name, "urls": urls})
 
-@app.route("/api/show/<sid>")
-def api_show_detail(sid):
-    show = get_show_by_id(sid)
-    if show:
-        return jsonify(show)
-    return jsonify({"error": "not found"}), 404
+
+@app.route("/api/video/parse")
+def api_video_parse():
+    """解析播放指定URL"""
+    url = request.args.get('url', '')
+    line = int(request.args.get('line', 0))
+    if not url:
+        return jsonify({"error": "need url"}), 400
+    lines = get_parse_lines()
+    if line >= len(lines):
+        line = 0
+    parse_url = lines[line]["url"] + url
+    return jsonify({"parse_url": parse_url, "line_name": lines[line]["name"]})
 
 
 if __name__ == "__main__":

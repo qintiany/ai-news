@@ -24,11 +24,17 @@ def init_db():
             summary TEXT DEFAULT '',
             source TEXT NOT NULL,
             category TEXT DEFAULT '其他',
+            image TEXT DEFAULT '',
             published_at TIMESTAMP,
             fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             hot_score REAL DEFAULT 0
         )
     """)
+    # 为旧数据库添加image列（兼容迁移）
+    try:
+        conn.execute("ALTER TABLE news ADD COLUMN image TEXT DEFAULT ''")
+    except:
+        pass
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_news_url ON news(url)
     """)
@@ -42,14 +48,14 @@ def init_db():
     conn.close()
 
 
-def insert_news(title, url, summary, source, category, published_at):
+def insert_news(title, url, summary, source, category, published_at, image=''):
     """插入新闻（去重）"""
     conn = get_db()
     try:
         conn.execute("""
-            INSERT OR IGNORE INTO news (title, url, summary, source, category, published_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (title, url, summary, source, category, published_at))
+            INSERT OR IGNORE INTO news (title, url, summary, source, category, published_at, image)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (title, url, summary, source, category, published_at, image))
         conn.commit()
         return True
     except Exception as e:
@@ -76,7 +82,7 @@ def get_latest_news(limit=10, offset=0, category=None, source=None):
     where_clause = " AND ".join(conditions)
     
     rows = conn.execute(f"""
-        SELECT id, title, url, summary, source, category, published_at, hot_score
+        SELECT id, title, url, summary, source, category, published_at, hot_score, image
         FROM news
         WHERE {where_clause}
         ORDER BY hot_score DESC, published_at DESC
@@ -124,7 +130,7 @@ def get_news_by_source(source):
     """按来源获取新闻"""
     conn = get_db()
     rows = conn.execute("""
-        SELECT id, title, url, summary, source, category, published_at
+        SELECT id, title, url, summary, source, category, published_at, image
         FROM news
         WHERE source = ?
         ORDER BY published_at DESC
