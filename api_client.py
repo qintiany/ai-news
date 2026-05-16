@@ -1,14 +1,15 @@
 """
-实时影视数据客户端 v2
+实时影视数据客户端 v3
 数据源：猫眼资源 MacCMS API (32954+ 实时影视)
 解析：多线路快速解析接口
-播放：智能腾讯/爱奇艺搜索 + 解析
+剧集：从note字段智能解析集数
 """
 import requests
 import xml.etree.ElementTree as ET
 import time
 import threading
 from functools import lru_cache
+from episode_provider import parse_episode_info, generate_episodes, build_episode_play_urls, build_movie_play_urls
 
 # ========== 数据源 ==========
 API_BASE = "https://maoyanzy.com/api.php/provide/vod"
@@ -46,24 +47,34 @@ TYPE_MAP = {
 
 
 def _parse_xml_video(video_elem):
-    """解析单个视频XML元素"""
+    """解析单个视频XML元素，含剧集信息"""
     def _text(tag):
         el = video_elem.find(tag)
         return el.text.strip() if el is not None and el.text else ""
+    
+    name = _text("name")
+    note = _text("note")
+    ep_info = parse_episode_info(note, name)
+    
     return {
         "id": _text("id"),
-        "name": _text("name"),
+        "name": name,
         "type": _text("type"),
         "pic": _text("pic"),
         "lang": _text("lang"),
         "area": _text("area"),
         "year": _text("year"),
-        "note": _text("note"),
+        "note": note,
         "actor": _text("actor"),
         "director": _text("director"),
         "des": _text("des"),
         "last": _text("last"),
         "dt": _text("dt"),
+        # 剧集信息
+        "ep_info": ep_info,
+        "total_episodes": ep_info.get("total") or ep_info.get("current") or 1,
+        "is_movie": ep_info.get("is_movie", False),
+        "ep_unit": ep_info.get("unit", "集"),
     }
 
 
@@ -153,18 +164,15 @@ def get_trending():
         return []
 
 
-def build_play_urls(video_name):
+def build_play_urls(video_name, episode_num=None, ep_unit="集"):
     """
     根据视频名构建各平台搜索URL
-    同时尝试腾讯和爱奇艺的搜索
+    - 电影/不传集数 → 直接搜片名
+    - 剧集 → 搜"片名 第N集"
     """
-    from urllib.parse import quote
-    encoded = quote(video_name)
-    return [
-        {"platform": "腾讯视频", "icon": "🐧", "url": f"https://v.qq.com/x/search/?q={encoded}"},
-        {"platform": "爱奇艺", "icon": "🥝", "url": f"https://so.iqiyi.com/so/q_{encoded}.html"},
-        {"platform": "优酷", "icon": "▶️", "url": f"https://so.youku.com/search_video/q_{encoded}"},
-    ]
+    if episode_num:
+        return build_episode_play_urls(video_name, episode_num, ep_unit)
+    return build_movie_play_urls(video_name)
 
 
 def get_parse_lines():

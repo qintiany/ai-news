@@ -150,12 +150,38 @@ def api_parse_test():
 
 @app.route("/api/video/play_urls")
 def api_video_play_urls():
-    """根据视频名获取各平台播放URL"""
+    """根据视频名获取各平台播放URL，支持集数"""
     name = request.args.get('name', '')
+    ep = request.args.get('ep', None)
+    unit = request.args.get('unit', '集')
     if not name:
         return jsonify({"error": "need name"}), 400
-    urls = build_play_urls(name)
-    return jsonify({"name": name, "urls": urls})
+    
+    episode_num = int(ep) if ep else None
+    urls = build_play_urls(name, episode_num, unit)
+    return jsonify({"name": name, "episode": episode_num, "urls": urls})
+
+
+@app.route("/api/video/episodes")
+def api_video_episodes():
+    """获取指定视频的剧集列表"""
+    name = request.args.get('name', '')
+    note = request.args.get('note', '')
+    if not name:
+        return jsonify({"error": "need name"}), 400
+    
+    from episode_provider import parse_episode_info, generate_episodes
+    ep_info = parse_episode_info(note, name)
+    episodes = generate_episodes(ep_info, name)
+    
+    return jsonify({
+        "name": name,
+        "total": ep_info.get("total"),
+        "current": ep_info.get("current"),
+        "is_movie": ep_info.get("is_movie"),
+        "unit": ep_info.get("unit", "集"),
+        "episodes": episodes,
+    })
 
 
 @app.route("/api/video/parse")
